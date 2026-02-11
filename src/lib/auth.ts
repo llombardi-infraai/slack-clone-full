@@ -11,8 +11,8 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/",
+    error: "/",
   },
   providers: [
     GoogleProvider({
@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           return null
         }
 
@@ -56,15 +56,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ token, session }) {
       if (token) {
-        session.user.id = token.id
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.image = token.picture
+        session.user.id = token.id as string
+        session.user.name = token.name as string | null
+        session.user.email = token.email as string | null
+        session.user.image = token.picture as string | null
       }
 
       return session
     },
     async jwt({ token, user }) {
+      if (!token.email) return token
+
       const dbUser = await prisma.user.findFirst({
         where: {
           email: token.email,
