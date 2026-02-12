@@ -11,24 +11,31 @@ import { Github, Chrome } from "lucide-react"
 export function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
     try {
       const result = await signIn("credentials", {
         email,
+        password,
         redirect: false,
       })
 
-      if (result?.ok) {
+      if (result?.error) {
+        setError("Invalid email or password")
+      } else if (result?.ok) {
         router.push("/workspaces")
         router.refresh()
       }
     } catch (error) {
       console.error("Login error:", error)
+      setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -36,6 +43,11 @@ export function LoginForm() {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="p-3 bg-red-900/50 border border-red-700 rounded text-red-200 text-sm">
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-gray-300">
@@ -47,6 +59,20 @@ export function LoginForm() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+            className="bg-[#222529] border-gray-700 text-white placeholder-gray-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-gray-300">
+            Password
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             className="bg-[#222529] border-gray-700 text-white placeholder-gray-500"
           />

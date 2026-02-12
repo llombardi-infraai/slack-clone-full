@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import CredentialsProvider from "next-auth/providers/credentials"
+import bcrypt from "bcrypt"
 import { prisma } from "./prisma"
 
 export const authOptions: NextAuthOptions = {
@@ -30,7 +31,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email) {
+        if (!credentials?.email || !credentials?.password) {
           return null
         }
 
@@ -40,7 +41,13 @@ export const authOptions: NextAuthOptions = {
           },
         })
 
-        if (!user) {
+        if (!user || !user.password) {
+          return null
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password)
+
+        if (!isValid) {
           return null
         }
 
