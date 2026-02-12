@@ -28,7 +28,7 @@ export function LoginForm() {
       })
 
       if (result?.error) {
-        setError("Invalid email or password")
+        setError(result.error)
       } else if (result?.ok) {
         router.push("/workspaces")
         router.refresh()

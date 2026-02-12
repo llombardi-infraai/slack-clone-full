@@ -32,30 +32,42 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("Email and password required")
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        })
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          })
 
-        if (!user || !user.password) {
-          return null
-        }
+          if (!user) {
+            throw new Error("Invalid credentials")
+          }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password)
+          if (!user.password) {
+            throw new Error("Please use Google or GitHub to sign in")
+          }
 
-        if (!isValid) {
-          return null
-        }
+          const isValid = await bcrypt.compare(credentials.password, user.password)
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
+          if (!isValid) {
+            throw new Error("Invalid credentials")
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+          }
+        } catch (error: any) {
+          // Check if it's a database schema error
+          if (error.message?.includes("password") || error.meta?.column_name === "password") {
+            throw new Error("Database needs migration. Please run: npx prisma migrate deploy")
+          }
+          throw error
         }
       },
     }),
